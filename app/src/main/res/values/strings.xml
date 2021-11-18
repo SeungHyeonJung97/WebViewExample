@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">WebViewExample</string>
+    <string name="permission_request"><![CDATA[권한 요청을 취소하시면 진행을 할 수 없습니다.\n[설정] > [권한]에서 권한을 허용하세요.]]></string>
+    <string name="setting_move">설정화면으로 이동합니다.</string>
+</resources>
