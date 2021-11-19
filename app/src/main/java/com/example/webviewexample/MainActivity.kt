@@ -58,6 +58,17 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent(Intent.ACTION_SENDTO, smsUri)
                     startActivity(intent)
                     return true
+                } else if(request.url.toString().startsWith("ashe://outLink")){
+                    if(request.url.toString().contains("url=")){
+                        val tempUri = Uri.parse(request.url.toString())
+                        val outLinkUri =
+                            Uri.parse(tempUri.getQueryParameter("url"))
+                        val intent = Intent(Intent.ACTION_VIEW, outLinkUri)
+                        startActivity(intent)
+                        return true
+                    } else if(request.url.toString().startsWith("ashe://openFile")){
+
+                    }
                 }
             }
             view?.loadUrl(request?.url.toString())
