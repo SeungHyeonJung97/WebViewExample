@@ -27,10 +27,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
-    private val BASE_URL = "http://210.120.112.114:4380/app/webviewTest1.html"
     private var mFileDownloadId = -1L
     private var downloadUrl = ""
-    private lateinit var cameraImagePath: String
     private var REQUEST_IMAGE_CAPTURE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         webView.settings.useWideViewPort = true
         webView.settings.userAgentString = webView.settings.userAgentString + "Ashe"
         webView.addJavascriptInterface(WebviewTest(), "WebviewTest")
-        webView.loadUrl(BASE_URL)
+        webView.loadUrl(Url.ACCESS_URL)
     }
 
     class InAppChromeClient : WebChromeClient() {

@@ -3,7 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Ashe/AndroidStudioProjects/WebViewExample/app/src/main/res/layout/activity_intro.xml" value="0.12708333333333333" />
         <entry key="..\:/Users/Ashe/AndroidStudioProjects/WebViewExample/app/src/main/res/layout/activity_main.xml" value="0.20155038759689922" />
+        <entry key="..\:/Users/Ashe/AndroidStudioProjects/WebViewExample/app/src/main/res/layout/dialog_debug_popup.xml" value="0.12708333333333333" />
         <entry key="..\:/Users/Ashe/AndroidStudioProjects/WebViewExample/app/src/main/res/xml/cache_paths.xml" value="0.128125" />
       </map>
     </option>
