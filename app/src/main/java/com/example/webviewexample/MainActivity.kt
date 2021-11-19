@@ -1,27 +1,30 @@
 package com.example.webviewexample
 
-import android.app.AlertDialog
-import android.content.DialogInterface
+import android.Manifest
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.IntentFilter
 import android.net.Uri
-import android.net.http.SslError
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
-import android.view.View
 import android.webkit.*
-import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
-import androidx.core.content.PermissionChecker
+import android.widget.Toast
+import androidx.core.content.FileProvider
+import com.example.webviewexample.PermissionCheck.setPermission
 import com.gun0912.tedpermission.PermissionListener
 import kotlinx.android.synthetic.main.activity_main.*
-import java.net.URISyntaxException
-import java.util.jar.Manifest
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private val BASE_URL = "http://210.120.112.114:4380/app/webviewTest1.html"
+    private var mFileDownloadId = -1L
+    private var downloadUrl = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -53,26 +56,162 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                     return true
 
-                } else if(request.url.toString().startsWith("sms:")){
+                } else if (request.url.toString().startsWith("sms:")) {
                     val smsUri = Uri.parse(request.url.toString())
                     val intent = Intent(Intent.ACTION_SENDTO, smsUri)
                     startActivity(intent)
                     return true
-                } else if(request.url.toString().startsWith("ashe://outLink")){
-                    if(request.url.toString().contains("url=")){
+                } else if (request.url.toString().startsWith("ashe://outLink")) {
+                    if (request.url.toString().contains("url=")) {
                         val tempUri = Uri.parse(request.url.toString())
                         val outLinkUri =
                             Uri.parse(tempUri.getQueryParameter("url"))
                         val intent = Intent(Intent.ACTION_VIEW, outLinkUri)
                         startActivity(intent)
                         return true
-                    } else if(request.url.toString().startsWith("ashe://openFile")){
+                    }
+                } else if (request.url.toString().startsWith("ashe://openFile")) {
+                    if (request.url.toString().contains("url=")) {
+                        val tempUri = Uri.parse(request.url.toString())
+                        downloadUrl = tempUri.getQueryParameter("url").toString()
 
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            onDownloadStart()
+                        } else {
+                            onDownloadPermission()
+                        }
+                        return true
                     }
                 }
             }
             view?.loadUrl(request?.url.toString())
             return super.shouldOverrideUrlLoading(view, request)
         }
+    }
+
+    private fun onDownloadStart() {
+        if (downloadUrl.isEmpty()) return
+
+        try {
+            var path: File? = null
+            val mimeTypeMap = MimeTypeMap.getSingleton()
+            val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val downloadUri = Uri.parse(downloadUrl)
+            val fileNameList = downloadUrl.split("/").toTypedArray()
+            val fileName: String = try {
+                fileNameList[fileNameList.size - 1]
+            } catch (e: java.lang.Exception) {
+                return
+            }
+
+            val fileExtension =
+                fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase()
+            val mimeType = mimeTypeMap.getMimeTypeFromExtension(fileExtension)
+            val request = DownloadManager.Request(downloadUri)
+            request.setTitle(fileName)
+            request.setDescription(downloadUrl)
+            request.setMimeType(mimeType)
+            request.setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_DOWNLOADS,
+                fileName
+            )
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                path =
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        .absoluteFile
+                path.mkdirs()
+                if (isDownloadFileExists(path.absolutePath + "/" + fileName)) {
+                    deleteDownloadFile(path.absolutePath + "/" + fileName)
+                }
+            }
+
+            val completeFilter =
+                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+            val downloadReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    unregisterReceiver(this)
+                    var uri: Uri? = null
+                    if (!isDestroyed) {
+                        val id: Long = intent!!.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                        if (id == mFileDownloadId) {
+                            val manager =
+                                context?.getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                            uri = manager.getUriForDownloadedFile(mFileDownloadId)
+                        }
+
+                        Toast.makeText(
+                            this@MainActivity,
+                            "File Download Succeed !",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            openFile(null, fileName, uri!!)
+                        } else {
+                            openFile(path!!.absolutePath, fileName, uri!!)
+                        }
+                    }
+                }
+            }
+            registerReceiver(downloadReceiver, completeFilter)
+            mFileDownloadId = downloadManager.enqueue(request)
+        } catch (e: Exception) {
+            Toast.makeText(this@MainActivity, "File Download Failed !", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openFile(path: String?, fileName: String, uri: Uri?) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+
+            val file = File("$path/$fileName")
+            val map = MimeTypeMap.getSingleton()
+            val ext = MimeTypeMap.getFileExtensionFromUrl(file.name)
+            var type = map.getMimeTypeFromExtension(ext)
+            if (type == null) type = "*/*"
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                intent.setDataAndType(uri, type)
+            } else {
+                val data = FileProvider.getUriForFile(
+                    this,
+                    this.applicationContext.packageName + ".com.example.webviewexample.provider",
+                    file
+                )
+                intent.setDataAndType(data, type)
+            }
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            startActivity(intent)
+
+        } catch (e: Exception) {
+            return
+        }
+
+
+    }
+    private fun onDownloadPermission(){
+        if (PermissionCheck.IsPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE, this)) {
+            onDownloadStart()
+        } else {
+            val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
+            setPermission(introPermissionListener, permission, applicationContext)
+        }
+    }
+    private val introPermissionListener: PermissionListener = object : PermissionListener {
+        override fun onPermissionGranted() {
+            onDownloadStart()
+        }
+
+        override fun onPermissionDenied(deniedPermissions: List<String>) {}
+    }
+
+    private fun isDownloadFileExists(pathName: String): Boolean {
+        val folder = File(pathName)
+        return folder.exists()
+    }
+
+    private fun deleteDownloadFile(pathName: String): Boolean {
+        val folder = File(pathName)
+        return folder.delete()
     }
 }
