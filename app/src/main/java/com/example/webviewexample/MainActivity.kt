@@ -6,11 +6,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.webkit.*
 import android.widget.Toast
@@ -19,11 +21,16 @@ import com.example.webviewexample.PermissionCheck.setPermission
 import com.gun0912.tedpermission.PermissionListener
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private val BASE_URL = "http://210.120.112.114:4380/app/webviewTest1.html"
     private var mFileDownloadId = -1L
     private var downloadUrl = ""
+    private lateinit var cameraImagePath: String
+    private var REQUEST_IMAGE_CAPTURE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,10 +89,41 @@ class MainActivity : AppCompatActivity() {
                         }
                         return true
                     }
+                } else if (request.url.toString().startsWith("ashe://reqUploadImage")) {
+                    val tempUri = Uri.parse(request.url.toString())
+                    val type = tempUri.getQueryParameter("type").toString()
+                    when (type) {
+                        "camera" -> {
+                            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                            startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+                        }
+                        "gallery" ->{
+                            val intent = Intent(Intent.ACTION_GET_CONTENT)
+                            intent.setType("image/*")
+                            startActivity(intent)
+                        }
+                    }
+                    Log.d("type", type)
+                    return true
                 }
             }
             view?.loadUrl(request?.url.toString())
             return super.shouldOverrideUrlLoading(view, request)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
+            val imageBitmap = data?.extras?.get("data") as Bitmap
+            val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+            val tempFile = File(cacheDir, "${timeStamp}.jpg")
+            tempFile.createNewFile()
+            val out = FileOutputStream(tempFile)
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG,100,out)
+            Toast.makeText(this,"${tempFile.path}",Toast.LENGTH_SHORT).show()
+            out.close()
+            tempFile.delete()
         }
     }
 
@@ -189,7 +227,8 @@ class MainActivity : AppCompatActivity() {
 
 
     }
-    private fun onDownloadPermission(){
+
+    private fun onDownloadPermission() {
         if (PermissionCheck.IsPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE, this)) {
             onDownloadStart()
         } else {
@@ -197,6 +236,7 @@ class MainActivity : AppCompatActivity() {
             setPermission(introPermissionListener, permission, applicationContext)
         }
     }
+
     private val introPermissionListener: PermissionListener = object : PermissionListener {
         override fun onPermissionGranted() {
             onDownloadStart()
