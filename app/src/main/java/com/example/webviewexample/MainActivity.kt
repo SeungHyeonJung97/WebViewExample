@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -43,6 +44,8 @@ class MainActivity : AppCompatActivity() {
         webView.settings.builtInZoomControls = true
         webView.settings.setSupportZoom(true)
         webView.settings.useWideViewPort = true
+        webView.settings.userAgentString = webView.settings.userAgentString + "Ashe"
+        webView.addJavascriptInterface(WebviewTest(), "WebviewTest")
         webView.loadUrl(BASE_URL)
     }
 
@@ -97,13 +100,17 @@ class MainActivity : AppCompatActivity() {
                             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                             startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
                         }
-                        "gallery" ->{
+                        "gallery" -> {
                             val intent = Intent(Intent.ACTION_GET_CONTENT)
                             intent.setType("image/*")
                             startActivity(intent)
                         }
                     }
                     Log.d("type", type)
+                    return true
+                } else if (request.url.toString().startsWith("ashe://reqAppInfo")) {
+                    val appInfo = "App Version_Code : " + BuildConfig.VERSION_CODE
+                    webView.loadUrl("javascript:getAppInfo('$appInfo')")
                     return true
                 }
             }
@@ -114,14 +121,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             val imageBitmap = data?.extras?.get("data") as Bitmap
             val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
             val tempFile = File(cacheDir, "${timeStamp}.jpg")
             tempFile.createNewFile()
             val out = FileOutputStream(tempFile)
-            imageBitmap.compress(Bitmap.CompressFormat.JPEG,100,out)
-            Toast.makeText(this,"${tempFile.path}",Toast.LENGTH_SHORT).show()
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            Toast.makeText(this, "${tempFile.path}", Toast.LENGTH_SHORT).show()
             out.close()
             tempFile.delete()
         }
@@ -254,4 +261,27 @@ class MainActivity : AppCompatActivity() {
         val folder = File(pathName)
         return folder.delete()
     }
+
+    inner class WebviewTest {
+        @JavascriptInterface
+        fun callMethod(arg: String) {
+            Toast.makeText(this@MainActivity, arg, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    var backpressedTime = 0L
+
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else if (webView.url.toString().contains("app/webviewTest1.html")) {
+            if (System.currentTimeMillis() > backpressedTime + 2000) {
+                backpressedTime = System.currentTimeMillis()
+                Toast.makeText(this, "\'뒤로\' 버튼을 한 번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT).show()
+            }else if(System.currentTimeMillis() <= backpressedTime + 2000){
+                finish()
+            }
+        }
+    }
 }
+
