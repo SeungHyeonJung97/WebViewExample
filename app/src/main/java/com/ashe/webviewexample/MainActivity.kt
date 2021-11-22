@@ -1,4 +1,4 @@
-package com.example.webviewexample
+package com.ashe.webviewexample
 
 import android.Manifest
 import android.app.DownloadManager
@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -18,7 +17,7 @@ import android.util.Log
 import android.webkit.*
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import com.example.webviewexample.PermissionCheck.setPermission
+import com.ashe.webviewexample.PermisionCheck.setPermission
 import com.gun0912.tedpermission.PermissionListener
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
@@ -34,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
 
         webView.webViewClient = InAppWebViewClient()
         webView.webChromeClient = InAppChromeClient()
@@ -234,7 +234,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDownloadPermission() {
-        if (PermissionCheck.IsPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE, this)) {
+        if (PermisionCheck.IsPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE, this)) {
             onDownloadStart()
         } else {
             val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE

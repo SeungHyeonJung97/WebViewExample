@@ -1,4 +1,4 @@
-package com.example.webviewexample
+package com.ashe.webviewexample
 
 object Url {
     const val PREFRENCE = "URL"

@@ -1,4 +1,4 @@
-package com.example.webviewexample
+package com.ashe.webviewexample
 
 import android.app.Dialog
 import android.content.Context
@@ -50,18 +50,18 @@ class DebugPopup(context: Context) : Dialog(context) {
                 url3.setText(Url.ETC_URL)
             }
 
-            if(Utils.getPrefString(context,"url1")!=""){
-                url1.setText(Utils.getPrefString(context,"url1"))
+            if(Utils.getPrefString(context, "url1") !=""){
+                url1.setText(Utils.getPrefString(context, "url1"))
             }else{
                 url1.setText(Url.WEBURL)
             }
-            if(Utils.getPrefString(context,"url2")!=""){
-                url2.setText(Utils.getPrefString(context,"url2"))
+            if(Utils.getPrefString(context, "url2") !=""){
+                url2.setText(Utils.getPrefString(context, "url2"))
             }else{
                 url2.setText(Url.DEBUG_URL)
             }
-            if(Utils.getPrefString(context,"url3")!=""){
-                url3.setText(Utils.getPrefString(context,"url3"))
+            if(Utils.getPrefString(context, "url3") !=""){
+                url3.setText(Utils.getPrefString(context, "url3"))
             }else{
                 url3.setText(Url.ETC_URL)
             }

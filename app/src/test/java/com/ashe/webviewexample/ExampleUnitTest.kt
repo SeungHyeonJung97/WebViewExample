@@ -1,4 +1,4 @@
-package com.example.webviewexample
+package com.ashe.webviewexample
 
 import org.junit.Test
 
