@@ -40,8 +40,9 @@ class MainActivity : AppCompatActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.allowFileAccess = true
         webView.settings.builtInZoomControls = true
-        webView.settings.setSupportZoom(true)
+        webView.settings.loadWithOverviewMode = true
         webView.settings.useWideViewPort = true
+        webView.settings.displayZoomControls = false
         webView.settings.userAgentString = webView.settings.userAgentString + "Ashe"
         webView.addJavascriptInterface(WebviewTest(), "WebviewTest")
         webView.loadUrl(Url.ACCESS_URL)
